@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,6 +10,8 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { ingestRepository, sendChatMessage } from "@/lib/api"
 import { Send, Mic, MicOff } from "lucide-react"
 import type { Message, RepoContent } from "@/lib/types"
+import { ElevenLabsClient } from "elevenlabs"
+import type { SpeechRecognition, SpeechRecognitionEvent } from "@/types"
 
 export default function Home() {
   const [repoUrl, setRepoUrl] = useState("")
@@ -24,6 +26,11 @@ export default function Home() {
   const inputRef = useRef<HTMLInputElement>(null)
   const transcriptRef = useRef("")
   const submitButtonRef = useRef<HTMLButtonElement>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const client = useMemo(() => new ElevenLabsClient({
+    apiKey: process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY as string
+  }), [])
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -77,12 +84,42 @@ export default function Home() {
     setIsListening(!isListening)
   }
 
-  const speakMessage = (text: string) => {
-    if (synthesis) {
-      const utterance = new SpeechSynthesisUtterance(text)
-      synthesis.speak(utterance)
+  const speakMessage = async (text: string) => {
+    try {
+      setIsPlaying(true);
+      
+      const response = await fetch("https://api.elevenlabs.io/v1/text-to-speech/JBFqnCBsd6RMkjVDRZzb", {
+        method: "POST",
+        headers: {
+          "xi-api-key": process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY!,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text,
+          model_id: "eleven_multilingual_v2",
+        }),
+      });
+  
+      if (!response.ok) throw new Error("Failed to fetch audio");
+  
+      const audioBlob = await response.blob();
+      const url = URL.createObjectURL(audioBlob);
+      const audioElement = new Audio(url);
+      audioRef.current = audioElement;
+      
+      audioElement.onended = () => {
+        URL.revokeObjectURL(url);
+        setIsPlaying(false);
+        audioRef.current = null;
+      };
+  
+      await audioElement.play();
+    } catch (error) {
+      console.error("Text-to-speech failed:", error);
+      setIsPlaying(false);
+      audioRef.current = null;
     }
-  }
+  };
 
   const handleChatSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -103,9 +140,7 @@ export default function Home() {
           content: response.response
         }
         setMessages(prev => [...prev, aiMessage])
-        if (synthesis) {
-          speakMessage(response.response)
-        }
+        await speakMessage(response.response)
       } else {
         throw new Error(response.error || 'Failed to get response')
       }
@@ -142,8 +177,11 @@ export default function Home() {
   }
 
   const stopSpeaking = () => {
-    if (synthesis) {
-      synthesis.cancel()
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      setIsPlaying(false);
+      audioRef.current = null;
     }
   }
 
@@ -235,6 +273,7 @@ export default function Home() {
                 onClick={stopSpeaking}
                 variant="outline"
                 className="px-2"
+                disabled={!isPlaying}
               >
                 <span className="sr-only">Stop Speaking</span>
                 <div className="w-4 h-4 bg-red-500" />
