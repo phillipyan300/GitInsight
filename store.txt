@@ -11,16 +11,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(
-    app,
-    resources={
-        r"/api/*": {
-            "origins": ["http://localhost:3000"],
-            "methods": ["POST", "OPTIONS"],
-            "allow_headers": ["Content-Type"],
-        }
-    },
-)
+CORS(app)
+
 # Path for temporary storage
 TEMP_STORAGE_FILE = "temp_context.json"
 
@@ -40,71 +32,82 @@ def load_context():
     with open(TEMP_STORAGE_FILE, 'r') as f:
         return json.load(f)
 
-@app.route("/api/ingest", methods=["POST"])
-def ingest_repo():
+@app.route('/ingest', methods=['POST'])
+def ingest_from_web():
+    """Ingest a repository and store its content"""
     try:
         data = request.get_json()
-        repo_url = data.get("url")
-
+        repo_url = data.get('url')
+        
         if not repo_url:
-            return jsonify({"error": "No URL provided"}), 400
+            return jsonify({'error': 'No URL provided'}), 400
 
         result = ingest_repository(repo_url)
-
-        if not result["success"]:
-            return (
-                jsonify(
-                    {"success": False, "error": result.get("error", "Unknown error")}
-                ),
-                400,
-            )
         
+        if not result['success']:
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Unknown error'),
+                'url': repo_url
+            }), 500
+            
         # Save the context for later use
         save_context(result['content'], result['tree'])
-
-        return jsonify(result)
-
+            
+        return jsonify({
+            'success': True,
+            'url': repo_url,
+            'content': result['content'],
+            'tree': result['tree']
+        })
+        
     except Exception as e:
-        logger.error(f"Error ingesting repository: {str(e)}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        logger.error(f"Error in ingest endpoint: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'url': repo_url
+        }), 500
 
-@app.route("/api/chat", methods=["POST"])
+@app.route('/chat', methods=['POST'])
 def chat():
     """Chat endpoint that uses stored context"""
+    print("wft")
     try:
         data = request.get_json()
-        message = data.get("message")
-        repo_url = data.get("repo_url")
-
-        if not message or not repo_url:
-            return jsonify({"error": "Message and repo_url are required"}), 400
+        user_input = data.get('message')
+        
+        if not user_input:
+            return jsonify({'error': 'No message provided'}), 400
             
         # Load the stored context
         context = load_context()
         if not context:
-            return jsonify({"error": "No context available. Please ingest a repository first."}), 400
+            return jsonify({'error': 'No context available. Please ingest a repository first.'}), 400
             
         # Combine content and tree for context
-        full_context = f"Repository Context:\n{context['content']}\n\nDirectory Structure:\n{context['tree']}"
+        full_context = f"Repository Content:\n{context['content']}\n\nDirectory Structure:\n{context['tree']}"
         
-        # Get chat response using our chat pipeline
-        result = get_chat_response(message, full_context)
+        # Get chat response
+        result = get_chat_response(user_input, full_context)
         
         if not result['success']:
             return jsonify({
-                "success": False,
-                "error": result.get("error", "Failed to get chat response")
+                'success': False,
+                'error': result.get('error', 'Failed to get chat response')
             }), 500
             
         return jsonify({
-            "success": True,
-            "response": result['response'],
-            "repo_url": repo_url
+            'success': True,
+            'response': result['response']
         })
         
     except Exception as e:
-        logger.error(f"Error in chat: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Error in chat endpoint: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @app.route('/test')
 def test():
