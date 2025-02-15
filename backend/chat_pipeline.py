@@ -1,4 +1,4 @@
-from openai import OpenAI
+import google.generativeai as genai
 from dotenv import load_dotenv
 import os
 import logging
@@ -13,12 +13,12 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 load_dotenv()
 
-# Initialize OpenAI client
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+# Initialize Gemini client
+genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
 
 def get_chat_response(text, context=""):
     """
-    Get a response from ChatGPT for the given text and context.
+    Get a response from Gemini for the given text and context.
     
     Args:
         text (str): The user's input text
@@ -32,12 +32,15 @@ def get_chat_response(text, context=""):
         }
     """
     try:
-        logger.info("Sending request to ChatGPT")
+        logger.info("Sending request to Gemini")
         
-        # System message sets up how the AI should approach the repository
-        system_content = """You are an AI assistant that:
+        # Create the model
+        model = genai.GenerativeModel('gemini-pro')
+        
+        # System prompt to set behavior
+        system_prompt = """You are an AI assistant that:
         1. Specializes in analyzing and explaining code repositories
-        2. Speaks in a natural, conversational way (as if having a friendly chat)
+        2. Speaks in a natural, conversational way
         3. References specific parts of the code when relevant
         4. Keeps responses clear and concise
         
@@ -47,27 +50,24 @@ def get_chat_response(text, context=""):
         - Use examples from the actual codebase
         """
         
-        # User message contains the specific question and repository context
-        user_content = f"""Repository Context:
+        # Combine system prompt, context, and user question
+        full_prompt = f"""{system_prompt}
+
+        Repository Context:
         {context}
-        
+
         User Question: {text}"""
         
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": system_content},
-                {"role": "user", "content": user_content}
-            ]
-        )
+        # Generate response
+        response = model.generate_content(full_prompt)
         
-        logger.info("Received response from ChatGPT")
+        logger.info("Received response from Gemini")
         return {
             'success': True,
-            'response': response.choices[0].message.content
+            'response': response.text
         }
     except Exception as e:
-        logger.error(f"ChatGPT request failed: {str(e)}")
+        logger.error(f"Gemini request failed: {str(e)}")
         return {
             'success': False,
             'error': str(e)
