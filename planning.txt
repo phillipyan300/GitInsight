@@ -12,3 +12,8 @@ Why it's better than cursor:
 Extra: 
 1. Automatically generated tour from beginning
 2. Voice based navigation?
+
+
+Notes:
+Can't use full end to end integration elevenlabs (bc context window limitations for the API)
+Probably will need to do api call to gpt with context of the source code, then ask questions, and read out loud the response. 

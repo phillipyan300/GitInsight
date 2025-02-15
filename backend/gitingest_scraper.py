@@ -34,9 +34,11 @@ def ingest_repository(repo_url, timeout=30):
         
         # Setup Chrome browser options
         chrome_options = Options()
-        # chrome_options.add_argument('--headless')  # Uncomment for production
+        chrome_options.add_argument('--headless')  # Enable headless mode
         chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--disable-dev-shm-usage')
+        chrome_options.add_argument('--disable-gpu')  # Sometimes needed for headless
+        chrome_options.add_argument('--window-size=1920,1080')  # Set a standard window size
         
         # Initialize the Chrome driver
         driver = webdriver.Chrome(options=chrome_options)
