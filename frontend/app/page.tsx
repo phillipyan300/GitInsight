@@ -2,12 +2,12 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send } from "lucide-react"
+import { Send, Mic, MicOff } from "lucide-react"
 
 interface Message {
   role: "user" | "assistant"
@@ -18,6 +18,84 @@ export default function Home() {
   const [repoUrl, setRepoUrl] = useState("")
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
+  const [isListening, setIsListening] = useState(false)
+  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null)
+  const [synthesis, setSynthesis] = useState<SpeechSynthesis | null>(null)
+
+  useEffect(() => {
+    // Initialize speech recognition
+    if (typeof window !== 'undefined' && 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+      const recognitionInstance = new SpeechRecognition()
+      recognitionInstance.continuous = false
+      recognitionInstance.interimResults = false
+
+      recognitionInstance.onresult = (event) => {
+        const transcript = event.results[0][0].transcript
+        setInput(transcript)
+        handleMessageSubmit(transcript)
+      }
+
+      recognitionInstance.onerror = (event) => {
+        console.error('Speech recognition error:', event.error)
+        setIsListening(false)
+      }
+
+      recognitionInstance.onend = () => {
+        setIsListening(false)
+      }
+
+      setRecognition(recognitionInstance)
+    }
+
+    // Initialize speech synthesis
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      setSynthesis(window.speechSynthesis)
+    }
+  }, [])
+
+  const toggleListening = () => {
+    if (isListening) {
+      recognition?.stop()
+    } else {
+      recognition?.start()
+    }
+    setIsListening(!isListening)
+  }
+
+  const speakMessage = (text: string) => {
+    if (synthesis) {
+      const utterance = new SpeechSynthesisUtterance(text)
+      synthesis.speak(utterance)
+    }
+  }
+
+  const handleMessageSubmit = async (message: string) => {
+    if (!message.trim()) return
+
+    const userMessage: Message = { role: "user", content: message }
+    setMessages((prevMessages) => [...prevMessages, userMessage])
+    setInput("")
+
+    // Here you would send the message to your backend
+    console.log("Sending message:", message)
+
+    // Simulating an AI response
+    setTimeout(() => {
+      const aiResponse = "This is a simulated response. In a real application, this would be the response from your AI backend."
+      const aiMessage: Message = {
+        role: "assistant",
+        content: aiResponse,
+      }
+      setMessages((prevMessages) => [...prevMessages, aiMessage])
+      speakMessage(aiResponse) // Speak the AI's response
+    }, 1000)
+  }
+
+  const handleChatSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    handleMessageSubmit(input)
+  }
 
   const handleRepoSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -29,28 +107,6 @@ export default function Home() {
         content: `Hello! I'm ready to chat about the repository: ${repoUrl}. What would you like to know?`,
       },
     ])
-  }
-
-  const handleChatSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (!input.trim()) return
-
-    const userMessage: Message = { role: "user", content: input }
-    setMessages((prevMessages) => [...prevMessages, userMessage])
-    setInput("")
-
-    // Here you would typically send the message to your backend
-    console.log("Sending message:", input)
-
-    // Simulating an AI response
-    setTimeout(() => {
-      const aiMessage: Message = {
-        role: "assistant",
-        content:
-          "This is a simulated response. In a real application, this would be the response from your AI backend.",
-      }
-      setMessages((prevMessages) => [...prevMessages, aiMessage])
-    }, 1000)
   }
 
   return (
@@ -90,6 +146,17 @@ export default function Home() {
             <Button type="submit">
               <Send className="mr-2 h-4 w-4" />
               Send
+            </Button>
+            <Button 
+              type="button" 
+              onClick={toggleListening}
+              variant={isListening ? "destructive" : "default"}
+            >
+              {isListening ? (
+                <MicOff className="h-4 w-4" />
+              ) : (
+                <Mic className="h-4 w-4" />
+              )}
             </Button>
           </form>
         </CardFooter>
