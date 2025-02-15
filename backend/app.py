@@ -21,27 +21,48 @@ def ingest_from_web():
             return jsonify({'error': 'No URL provided'}), 400
 
         result = ingest_repository(repo_url)
-        return jsonify(result)
+        
+        if not result['success']:
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Unknown error'),
+                'url': repo_url
+            }), 500
             
+        return jsonify({
+            'success': True,
+            'url': repo_url,
+            'content': result['content'],
+            'tree': result['tree']  # Add directory structure to response
+        })
+        
     except Exception as e:
         logger.error(f"Error in ingest endpoint: {str(e)}")
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': str(e),
+            'url': repo_url
         }), 500
 
-@app.route('/test', methods=['GET'])
-def test_gitingest():
-    """Test endpoint using GitInsight repository"""
+@app.route('/test')
+def test():
+    """Test endpoint using a sample repository"""
     try:
         test_url = "https://github.com/phillipyan300/GitInsight"
         result = ingest_repository(test_url)
-        print(result)
+        
+        if not result['success']:
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Unknown error'),
+                'url_tested': test_url
+            }), 500
         
         return jsonify({
             'success': True,
             'url_tested': test_url,
-            'content': result['content']
+            'content': result['content'],
+            'tree': result['tree']  # Add directory structure to response
         })
             
     except Exception as e:
