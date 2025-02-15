@@ -1,0 +1,28 @@
+
+
+Most basic:
+1. User input GitHub repo 
+2. Git ingest processes it
+3. Scrape from gitingest send to agent 
+4. Agent “learns it”
+5. Spin up chat ability 
+6. Ideally have elevenlabs + Whisper so you can speak to it
+
+
+Extra: 
+1. Guided tour from beginning
+2. Voice based navigation?
+
+
+- Cursor only has context for couple files
+- Cursor only sees current code (not the choices made in commit)
+- Speaking is faster/more efficient.
+
+
+
+
+Look at repo different periods of time:
+1.  user inputs query,
+2. look at commit messages to find most relevant changes for that function
+3.  parse repo at those points with git ingest
+4. Do like rag? for analysis . 
