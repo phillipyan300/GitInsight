@@ -10,10 +10,12 @@ Why it's better than cursor:
 - Speaking is faster/more efficient.
 
 Extra: 
-1. Automatically generated tour from beginning
-2. Voice based navigation?
+1. Get the commit messages (claim you can look back)
+
 
 
 Notes:
 Can't use full end to end integration elevenlabs (bc context window limitations for the API)
 Probably will need to do api call to gpt with context of the source code, then ask questions, and read out loud the response. 
+
+
