@@ -9,16 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ingestRepository, sendChatMessage } from "@/lib/api"
 import { Send, Mic, MicOff } from "lucide-react"
-
-interface Message {
-  role: "user" | "assistant"
-  content: string
-}
-
-interface RepoContent {
-  content: string
-  tree: string
-}
+import type { Message, RepoContent } from "@/lib/types"
 
 export default function Home() {
   const [repoUrl, setRepoUrl] = useState("")
@@ -32,42 +23,40 @@ export default function Home() {
   const [synthesis, setSynthesis] = useState<SpeechSynthesis | null>(null)
 
   useEffect(() => {
-    // Initialize speech recognition
-    if (typeof window !== 'undefined' && 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-      const recognitionInstance = new SpeechRecognition()
-      recognitionInstance.continuous = false
-      recognitionInstance.interimResults = false
+    if (typeof window !== 'undefined') {
+      // Speech Recognition setup
+      if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+        const recognitionInstance = new SpeechRecognition()
+        recognitionInstance.continuous = false
+        recognitionInstance.interimResults = false
 
-      recognitionInstance.onresult = (event) => {
-        const transcript = event.results[0][0].transcript
-        setInput(transcript)
-        handleMessageSubmit(transcript)
+        recognitionInstance.onresult = (event) => {
+          const transcript = event.results[0][0].transcript
+          setInput(transcript)
+          handleChatSubmit(new Event('submit') as any)
+        }
+
+        recognitionInstance.onerror = () => setIsListening(false)
+        recognitionInstance.onend = () => setIsListening(false)
+
+        setRecognition(recognitionInstance)
       }
 
-      recognitionInstance.onerror = (event) => {
-        console.error('Speech recognition error:', event.error)
-        setIsListening(false)
+      // Speech Synthesis setup
+      if ('speechSynthesis' in window) {
+        setSynthesis(window.speechSynthesis)
       }
-
-      recognitionInstance.onend = () => {
-        setIsListening(false)
-      }
-
-      setRecognition(recognitionInstance)
-    }
-
-    // Initialize speech synthesis
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      setSynthesis(window.speechSynthesis)
     }
   }, [])
 
   const toggleListening = () => {
+    if (!recognition) return
+
     if (isListening) {
-      recognition?.stop()
+      recognition.stop()
     } else {
-      recognition?.start()
+      recognition.start()
     }
     setIsListening(!isListening)
   }
@@ -79,47 +68,38 @@ export default function Home() {
     }
   }
 
-  const handleMessageSubmit = async (message: string) => {
-    if (!message.trim()) return
-
-    const userMessage: Message = { role: "user", content: message }
-    setMessages((prevMessages) => [...prevMessages, userMessage])
-    setInput("")
-
-    // Here you would send the message to your backend
-    console.log("Sending message:", message)
-
-    // Simulating an AI response
-    setTimeout(() => {
-      const aiResponse = "This is a simulated response. In a real application, this would be the response from your AI backend."
-      const aiMessage: Message = {
-        role: "assistant",
-        content: aiResponse,
-      }
-      setMessages((prevMessages) => [...prevMessages, aiMessage])
-      speakMessage(aiResponse) // Speak the AI's response
-    }, 1000)
-  }
-
   const handleChatSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!input.trim() || !repoUrl) return
 
     const userMessage: Message = { role: "user", content: input }
     setMessages(prev => [...prev, userMessage])
+    const currentInput = input // Store current input
     setInput("")
     setIsLoading(true)
+    setError(null)
 
     try {
-      const response = await sendChatMessage(input, repoUrl)
-      const aiMessage: Message = {
-        role: "assistant",
-        content: response.response
+      const response = await sendChatMessage(currentInput, repoUrl)
+      if (response.success) {
+        const aiMessage: Message = {
+          role: "assistant",
+          content: response.response
+        }
+        setMessages(prev => [...prev, aiMessage])
+        if (synthesis) {
+          speakMessage(response.response)
+        }
+      } else {
+        throw new Error(response.error || 'Failed to get response')
       }
-      setMessages(prev => [...prev, aiMessage])
-      speakMessage(response.response) // Add this to enable speech for AI responses
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to send message')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send message'
+      setError(errorMessage)
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: `Error: ${errorMessage}`
+      }])
     } finally {
       setIsLoading(false)
     }
@@ -132,11 +112,7 @@ export default function Home() {
 
     try {
       const result = await ingestRepository(repoUrl)
-      setRepoContent({
-        content: result.content,
-        tree: result.tree
-      })
-      // Add welcome message after successful ingestion
+      setRepoContent(result)
       setMessages([{
         role: "assistant",
         content: `Repository ingested successfully! I'm ready to chat about the repository: ${repoUrl}. What would you like to know?`
@@ -216,17 +192,17 @@ export default function Home() {
                 <Send className="h-4 w-4 mr-2" />
                 {isLoading ? "Sending..." : "Send"}
               </Button>
-            <Button 
-              type="button" 
-              onClick={toggleListening}
-              variant={isListening ? "destructive" : "default"}
-            >
-              {isListening ? (
-                <MicOff className="h-4 w-4" />
-              ) : (
-                <Mic className="h-4 w-4" />
-              )}
-            </Button>
+              <Button
+                type="button"
+                onClick={toggleListening}
+                variant={isListening ? "destructive" : "default"}
+              >
+                {isListening ? (
+                  <MicOff className="h-4 w-4" />
+                ) : (
+                  <Mic className="h-4 w-4" />
+                )}
+              </Button>
             </form>
           </CardFooter>
         )}
