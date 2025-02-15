@@ -4,7 +4,7 @@ import logging
 import json
 import os
 from gitingest_scraper import ingest_repository
-from chat_pipeline import get_chat_response
+from chat_pipeline import get_chat_response_sync as get_chat_response
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -24,12 +24,59 @@ CORS(
 # Path for temporary storage
 TEMP_STORAGE_FILE = "temp_context.json"
 
-
 def save_context(content, tree):
-    """Save the current context to a temporary file"""
-    context = {"content": content, "tree": tree}
+    """
+    Save the repository context as an array of files.
+    
+    Expected format for each file section:
+      =================================================
+      File: <filename>
+      =================================================
+      <file content lines...>
+    
+    Args:
+        content (str): Raw content from gitingest.
+        tree (str): Directory structure from gitingest.
+    """
+    lines = content.splitlines()
+    files = []
+    i = 0
+
+    while i < len(lines):
+        # Look for the delimiter line indicating a new file section
+        if lines[i].strip() == "================================================":
+            i += 1  # Move to the next line which should be the file header
+            if i < len(lines) and lines[i].startswith("File: "):
+                # Extract file name
+                current_file = lines[i].replace("File: ", "").strip()
+                i += 1
+                # Skip the next delimiter line, if it exists
+                if i < len(lines) and lines[i].strip() == "================================================":
+                    i += 1
+                # Gather content lines until the next delimiter or end of file
+                current_content = []
+                while i < len(lines) and lines[i].strip() != "================================================":
+                    current_content.append(lines[i])
+                    i += 1
+                files.append({
+                    "file": current_file,
+                    "content": "\n".join(current_content).strip()
+                })
+            else:
+                # If no file header is found, skip to the next line
+                i += 1
+        else:
+            i += 1
+
+    # Add tree structure as a special file entry
+    files.append({
+        "file": "_directory_structure",
+        "content": tree
+    })
+
+    # Save the result as a JSON array
     with open(TEMP_STORAGE_FILE, "w") as f:
-        json.dump(context, f)
+        json.dump(files, f, indent=2)
 
 
 def load_context():
@@ -99,7 +146,7 @@ def chat():
             )
 
         # Combine content and tree for context
-        full_context = f"Repository Context:\n{context['content']}\n\nDirectory Structure:\n{context['tree']}"
+        full_context = get_full_context(context)
 
         # Get chat response using our chat pipeline
         result = get_chat_response(message, full_context)
@@ -171,6 +218,33 @@ def test_curl_get():
 @app.route("/")
 def hello_world():
     return {"message": "Hello, World!"}
+
+
+def get_full_context(context):
+    """
+    Convert context array into a single string for the AI.
+    
+    Args:
+        context (list): Array of file objects with 'file' and 'content' keys
+        
+    Returns:
+        str: Formatted string containing all files and their contents
+    """
+    # Build context string
+    parts = []
+    
+    # First add all regular files
+    for file in context:
+        if file["file"] != "_directory_structure":
+            parts.append(f"File: {file['file']}\n{file['content']}")
+    
+    # Then add directory structure at the end
+    for file in context:
+        if file["file"] == "_directory_structure":
+            parts.append(f"Directory Structure:\n{file['content']}")
+            break
+    
+    return "\n\n".join(parts)
 
 
 if __name__ == "__main__":
