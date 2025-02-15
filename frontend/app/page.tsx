@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,6 +21,9 @@ export default function Home() {
   const [isListening, setIsListening] = useState(false)
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null)
   const [synthesis, setSynthesis] = useState<SpeechSynthesis | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const transcriptRef = useRef("")
+  const submitButtonRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -31,14 +34,20 @@ export default function Home() {
         recognitionInstance.continuous = false
         recognitionInstance.interimResults = false
 
-        recognitionInstance.onresult = (event) => {
+        recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
           const transcript = event.results[0][0].transcript
+          transcriptRef.current = transcript
           setInput(transcript)
-          handleChatSubmit(new Event('submit') as any)
         }
 
         recognitionInstance.onerror = () => setIsListening(false)
-        recognitionInstance.onend = () => setIsListening(false)
+        
+        recognitionInstance.onend = () => {
+          setIsListening(false)
+          if (transcriptRef.current.trim()) {
+            submitButtonRef.current?.click()
+          }
+        }
 
         setRecognition(recognitionInstance)
       }
@@ -49,6 +58,13 @@ export default function Home() {
       }
     }
   }, [])
+
+  // Focus input when repo is loaded
+  useEffect(() => {
+    if (repoContent) {
+      inputRef.current?.focus()
+    }
+  }, [repoContent])
 
   const toggleListening = () => {
     if (!recognition) return
@@ -125,6 +141,12 @@ export default function Home() {
     }
   }
 
+  const stopSpeaking = () => {
+    if (synthesis) {
+      synthesis.cancel()
+    }
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <Card className="w-full max-w-2xl">
@@ -183,12 +205,17 @@ export default function Home() {
           <CardFooter>
             <form onSubmit={handleChatSubmit} className="flex w-full space-x-2">
               <Input
+                ref={inputRef}
                 placeholder="Ask a question about the repository..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={isLoading}
               />
-              <Button type="submit" disabled={isLoading}>
+              <Button 
+                ref={submitButtonRef}
+                type="submit" 
+                disabled={isLoading}
+              >
                 <Send className="h-4 w-4 mr-2" />
                 {isLoading ? "Sending..." : "Send"}
               </Button>
@@ -202,6 +229,15 @@ export default function Home() {
                 ) : (
                   <Mic className="h-4 w-4" />
                 )}
+              </Button>
+              <Button
+                type="button"
+                onClick={stopSpeaking}
+                variant="outline"
+                className="px-2"
+              >
+                <span className="sr-only">Stop Speaking</span>
+                <div className="w-4 h-4 bg-red-500" />
               </Button>
             </form>
           </CardFooter>

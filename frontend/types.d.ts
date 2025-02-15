@@ -3,13 +3,20 @@ interface SpeechRecognitionErrorEvent extends Event {
 }
 
 interface SpeechRecognitionEvent extends Event {
-  results: {
-    [index: number]: {
-      [index: number]: {
-        transcript: string
-      }
-    }
-  }
+  results: SpeechRecognitionResultList
+}
+
+interface SpeechRecognitionResultList {
+  [index: number]: SpeechRecognitionResult
+}
+
+interface SpeechRecognitionResult {
+  [index: number]: SpeechRecognitionAlternative
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string
+  confidence: number
 }
 
 interface SpeechRecognition extends EventTarget {
