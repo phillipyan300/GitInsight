@@ -186,14 +186,16 @@ export default function Home() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <Card className="w-full max-w-2xl">
-        <CardHeader>
-          <CardTitle>GitHub Repo Analysis</CardTitle>
-          <CardDescription>Enter a GitHub repository URL to analyze its content.</CardDescription>
+    <main className="flex min-h-screen flex-col items-center justify-between p-8 md:p-24">
+      <Card className="w-full max-w-3xl">
+        <CardHeader className="space-y-4">
+          <CardTitle className="text-2xl">GitHub Repo Analysis</CardTitle>
+          <CardDescription className="text-lg">
+            Enter a GitHub repository URL to analyze its content.
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleRepoSubmit} className="flex space-x-2 mb-4">
+        <CardContent className="space-y-6">
+          <form onSubmit={handleRepoSubmit} className="flex space-x-4 mb-6">
             <Input
               type="url"
               placeholder="https://github.com/username/repo"
@@ -201,35 +203,36 @@ export default function Home() {
               onChange={(e) => setRepoUrl(e.target.value)}
               required
               disabled={isLoading}
+              className="text-lg"
             />
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading} className="px-6">
               {isLoading ? "Loading..." : "Analyze"}
             </Button>
           </form>
 
-          <ScrollArea className="h-[400px] w-full rounded-md border p-4">
+          <ScrollArea className="h-[450px] w-full rounded-md border p-6">
             {error && (
-              <div className="text-red-500 mb-4">
+              <div className="text-red-500 mb-6 p-4 bg-red-50 rounded-md">
                 Error: {error}
               </div>
             )}
             {repoContent && (
-              <div className="space-y-4">
-                <div className="text-green-600 font-medium mb-4">
+              <div className="space-y-6">
+                <div className="text-green-600 font-medium p-4 bg-green-50 rounded-md">
                   Repository was ingested successfully!
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {messages.map((message, i) => (
-                    <div key={i} className="space-y-1">
+                    <div key={i} className="space-y-2 py-4">
                       {message.role === 'user' ? (
-                        <div>
-                          <span className="font-semibold">You: </span>
-                          {message.content}
+                        <div className="space-y-2">
+                          <span className="font-semibold text-blue-600">You: </span>
+                          <p className="text-gray-700">{message.content}</p>
                         </div>
                       ) : (
-                        <div>
-                          <span className="font-semibold">Gitman: </span>
-                          {message.content}
+                        <div className="space-y-2">
+                          <span className="font-semibold text-purple-600">Gitman: </span>
+                          <p className="text-gray-700">{message.content}</p>
                         </div>
                       )}
                     </div>
@@ -240,44 +243,49 @@ export default function Home() {
           </ScrollArea>
         </CardContent>
         {repoContent && (
-          <CardFooter>
-            <form onSubmit={handleChatSubmit} className="flex w-full space-x-2">
+          <CardFooter className="pt-6">
+            <form onSubmit={handleChatSubmit} className="flex w-full space-x-4">
               <Input
                 ref={inputRef}
                 placeholder="Ask a question about the repository..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={isLoading}
+                className="text-lg"
               />
-              <Button 
-                ref={submitButtonRef}
-                type="submit" 
-                disabled={isLoading}
-              >
-                <Send className="h-4 w-4 mr-2" />
-                {isLoading ? "Sending..." : "Send"}
-              </Button>
-              <Button
-                type="button"
-                onClick={toggleListening}
-                variant={isListening ? "destructive" : "default"}
-              >
-                {isListening ? (
-                  <MicOff className="h-4 w-4" />
-                ) : (
-                  <Mic className="h-4 w-4" />
-                )}
-              </Button>
-              <Button
-                type="button"
-                onClick={stopSpeaking}
-                variant="outline"
-                className="px-2"
-                disabled={!isPlaying}
-              >
-                <span className="sr-only">Stop Speaking</span>
-                <div className="w-4 h-4 bg-red-500" />
-              </Button>
+              <div className="flex space-x-2">
+                <Button 
+                  ref={submitButtonRef}
+                  type="submit" 
+                  disabled={isLoading}
+                  className="px-6"
+                >
+                  <Send className="h-4 w-4 mr-2" />
+                  {isLoading ? "Sending..." : "Send"}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={toggleListening}
+                  variant={isListening ? "destructive" : "default"}
+                  className="px-4"
+                >
+                  {isListening ? (
+                    <MicOff className="h-4 w-4" />
+                  ) : (
+                    <Mic className="h-4 w-4" />
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={stopSpeaking}
+                  variant="outline"
+                  className="px-4"
+                  disabled={!isPlaying}
+                >
+                  <span className="sr-only">Stop Speaking</span>
+                  <div className="w-4 h-4 bg-red-500 rounded-full" />
+                </Button>
+              </div>
             </form>
           </CardFooter>
         )}
