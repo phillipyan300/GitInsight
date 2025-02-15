@@ -3,7 +3,6 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -102,9 +101,28 @@ export default function Home() {
     }, 1000)
   }
 
-  const handleChatSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleChatSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    handleMessageSubmit(input)
+    if (!input.trim() || !repoUrl) return
+
+    const userMessage: Message = { role: "user", content: input }
+    setMessages(prev => [...prev, userMessage])
+    setInput("")
+    setIsLoading(true)
+
+    try {
+      const response = await sendChatMessage(input, repoUrl)
+      const aiMessage: Message = {
+        role: "assistant",
+        content: response.response
+      }
+      setMessages(prev => [...prev, aiMessage])
+      speakMessage(response.response) // Add this to enable speech for AI responses
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to send message')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleRepoSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -129,33 +147,6 @@ export default function Home() {
     } finally {
       setIsLoading(false)
     }
-  }
-
-  const handleChatSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (!input.trim() || !repoUrl) return
-
-    const userMessage: Message = { role: "user", content: input }
-    setMessages(prev => [...prev, userMessage])
-    setInput("")
-    setIsLoading(true)
-
-    try {
-      const response = await sendChatMessage(input, repoUrl)
-      const aiMessage: Message = {
-        role: "assistant",
-        content: response.response
-      }
-      setMessages(prev => [...prev, aiMessage])
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to send message')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-        content: `Hello! I'm ready to chat about the repository: ${repoUrl}. What would you like to know?`,
-      },
-    ])
   }
 
   return (
@@ -243,4 +234,3 @@ export default function Home() {
     </main>
   )
 }
-
