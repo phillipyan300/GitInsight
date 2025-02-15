@@ -1,12 +1,12 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { ingestRepository, sendChatMessage } from "@/lib/api"
 import { Send } from "lucide-react"
 
 interface Message {
@@ -14,51 +14,72 @@ interface Message {
   content: string
 }
 
+interface RepoContent {
+  content: string
+  tree: string
+}
+
 export default function Home() {
   const [repoUrl, setRepoUrl] = useState("")
+  const [repoContent, setRepoContent] = useState<RepoContent | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
 
-  const handleRepoSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleRepoSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    // Here you would typically start a new chat session
-    console.log("Starting chat for repo:", repoUrl)
-    setMessages([
-      {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const result = await ingestRepository(repoUrl)
+      setRepoContent({
+        content: result.content,
+        tree: result.tree
+      })
+      // Add welcome message after successful ingestion
+      setMessages([{
         role: "assistant",
-        content: `Hello! I'm ready to chat about the repository: ${repoUrl}. What would you like to know?`,
-      },
-    ])
+        content: `Repository ingested successfully! I'm ready to chat about the repository: ${repoUrl}. What would you like to know?`
+      }])
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'An error occurred')
+      setRepoContent(null)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleChatSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleChatSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!input.trim()) return
+    if (!input.trim() || !repoUrl) return
 
     const userMessage: Message = { role: "user", content: input }
-    setMessages((prevMessages) => [...prevMessages, userMessage])
+    setMessages(prev => [...prev, userMessage])
     setInput("")
+    setIsLoading(true)
 
-    // Here you would typically send the message to your backend
-    console.log("Sending message:", input)
-
-    // Simulating an AI response
-    setTimeout(() => {
+    try {
+      const response = await sendChatMessage(input, repoUrl)
       const aiMessage: Message = {
         role: "assistant",
-        content:
-          "This is a simulated response. In a real application, this would be the response from your AI backend.",
+        content: response.response
       }
-      setMessages((prevMessages) => [...prevMessages, aiMessage])
-    }, 1000)
+      setMessages(prev => [...prev, aiMessage])
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to send message')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <Card className="w-full max-w-2xl">
         <CardHeader>
-          <CardTitle>GitHub Repo Chat</CardTitle>
-          <CardDescription>Enter a GitHub repository URL to start a conversation about the project.</CardDescription>
+          <CardTitle>GitHub Repo Analysis</CardTitle>
+          <CardDescription>Enter a GitHub repository URL to analyze its content.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleRepoSubmit} className="flex space-x-2 mb-4">
@@ -68,31 +89,61 @@ export default function Home() {
               value={repoUrl}
               onChange={(e) => setRepoUrl(e.target.value)}
               required
+              disabled={isLoading}
             />
-            <Button type="submit">Start Chat</Button>
-          </form>
-          <ScrollArea className="h-[400px] w-full rounded-md border p-4">
-            {messages.map((message, index) => (
-              <div key={index} className="mb-4">
-                <div className="font-bold">{message.role === "user" ? "You" : "AI"}:</div>
-                <div>{message.content}</div>
-              </div>
-            ))}
-          </ScrollArea>
-        </CardContent>
-        <CardFooter>
-          <form onSubmit={handleChatSubmit} className="flex w-full space-x-2">
-            <Input
-              placeholder="Ask a question about the repository..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-            />
-            <Button type="submit">
-              <Send className="mr-2 h-4 w-4" />
-              Send
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Loading..." : "Analyze"}
             </Button>
           </form>
-        </CardFooter>
+
+          <ScrollArea className="h-[400px] w-full rounded-md border p-4">
+            {error && (
+              <div className="text-red-500 mb-4">
+                Error: {error}
+              </div>
+            )}
+            {repoContent && (
+              <div className="space-y-4">
+                <div className="text-green-600 font-medium mb-4">
+                  Repository was ingested successfully!
+                </div>
+                <div className="space-y-4">
+                  {messages.map((message, i) => (
+                    <div key={i} className="space-y-1">
+                      {message.role === 'user' ? (
+                        <div>
+                          <span className="font-semibold">You: </span>
+                          {message.content}
+                        </div>
+                      ) : (
+                        <div>
+                          <span className="font-semibold">Gitman: </span>
+                          {message.content}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </ScrollArea>
+        </CardContent>
+        {repoContent && (
+          <CardFooter>
+            <form onSubmit={handleChatSubmit} className="flex w-full space-x-2">
+              <Input
+                placeholder="Ask a question about the repository..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                disabled={isLoading}
+              />
+              <Button type="submit" disabled={isLoading}>
+                <Send className="h-4 w-4 mr-2" />
+                {isLoading ? "Sending..." : "Send"}
+              </Button>
+            </form>
+          </CardFooter>
+        )}
       </Card>
     </main>
   )

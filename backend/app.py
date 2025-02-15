@@ -3,79 +3,65 @@ from flask_cors import CORS
 import logging
 from gitingest_scraper import ingest_repository
 
-# Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)
+CORS(
+    app,
+    resources={
+        r"/api/*": {
+            "origins": ["http://localhost:3000"],
+            "methods": ["POST", "OPTIONS"],
+            "allow_headers": ["Content-Type"],
+        }
+    },
+)
 
-@app.route('/ingest', methods=['POST'])
-def ingest_from_web():
-    """Ingest a repository by scraping gitingest.com"""
+
+@app.route("/api/ingest", methods=["POST"])
+def ingest_repo():
     try:
         data = request.get_json()
-        repo_url = data.get('url')
-        
+        repo_url = data.get("url")
+
         if not repo_url:
-            return jsonify({'error': 'No URL provided'}), 400
+            return jsonify({"error": "No URL provided"}), 400
 
         result = ingest_repository(repo_url)
-        
-        if not result['success']:
-            return jsonify({
-                'success': False,
-                'error': result.get('error', 'Unknown error'),
-                'url': repo_url
-            }), 500
-            
-        return jsonify({
-            'success': True,
-            'url': repo_url,
-            'content': result['content'],
-            'tree': result['tree']  # Add directory structure to response
-        })
-        
-    except Exception as e:
-        logger.error(f"Error in ingest endpoint: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e),
-            'url': repo_url
-        }), 500
 
-@app.route('/test')
-def test():
-    """Test endpoint using a sample repository"""
+        if not result["success"]:
+            return (
+                jsonify(
+                    {"success": False, "error": result.get("error", "Unknown error")}
+                ),
+                400,
+            )
+
+        return jsonify(result)
+
+    except Exception as e:
+        logger.error(f"Error ingesting repository: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/chat", methods=["POST"])
+def chat():
     try:
-        test_url = "https://github.com/phillipyan300/GitInsight"
-        result = ingest_repository(test_url)
-        
-        if not result['success']:
-            return jsonify({
-                'success': False,
-                'error': result.get('error', 'Unknown error'),
-                'url_tested': test_url
-            }), 500
-        
-        return jsonify({
-            'success': True,
-            'url_tested': test_url,
-            'content': result['content'],
-            'tree': result['tree']  # Add directory structure to response
-        })
-            
+        data = request.get_json()
+        message = data.get("message")
+        repo_url = data.get("repo_url")
+
+        if not message or not repo_url:
+            return jsonify({"error": "Message and repo_url are required"}), 400
+
+        response = f"This is a response about {repo_url}. You asked: {message}"
+        return jsonify({"response": response})
+
     except Exception as e:
-        logger.error(f"Error in test endpoint: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e),
-            'url_tested': test_url
-        }), 500
+        logger.error(f"Error in chat: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
-@app.route('/')
-def hello_world():
-    return {'message': 'Hello, World!'}
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5000) 
+if __name__ == "__main__":
+    app.run(debug=True, port=8000)
