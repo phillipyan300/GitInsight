@@ -3,7 +3,7 @@
 A conversational AI tool for understanding GitHub repositories. Ask questions about any codebase using text or voice.
 
 ## Features
-
+Demo video: https://www.loom.com/share/fa91acc50de6443da962f09761e02803?sid=4f6abb88-2520-42d6-846e-ba4a0b28e757  
 - 🔍 Analyze any public GitHub repository
 - 💬 Ask questions about the code in natural language  
 - 🎙️ Voice interface for hands-free interaction
