@@ -5,8 +5,13 @@ import "./globals.css";
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: "Gitman",
-  description: "Gitman is a tool that helps you understand codebases.",
+  title: "GitInsights",
+  description: "Ask questions about any GitHub repository using text or voice.",
+  icons: {
+    icon: '/GitInsightsLogo.png', 
+    shortcut: '/GitInsightsLogo.png',
+    apple: '/GitInsightsLogo.png',
+  },
 };
 
 export default function RootLayout({

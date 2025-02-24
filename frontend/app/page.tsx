@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ingestRepository, sendChatMessage } from "@/lib/api"
 import { Send, Mic, MicOff } from "lucide-react"
@@ -204,7 +204,25 @@ export default function Home() {
               {isLoading ? "Loading..." : "Analyze"}
             </Button>
           </form>
-         
+          <div className="mt-4 space-y-2">
+            <p className="text-sm text-muted-foreground">Try these examples:</p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                className="bg-[#f5e6d3] border-2 border-black hover:bg-[#f0d9bf]"
+                onClick={() => setRepoUrl("https://github.com/phillipyan300/GitInsight")}
+              >
+                GitInsight
+              </Button>
+              <Button
+                variant="outline"
+                className="bg-[#f5e6d3] border-2 border-black hover:bg-[#f0d9bf]"
+                onClick={() => setRepoUrl("https://github.com/ssocolow/flare_insure")}
+              >
+                Next.js
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <ScrollArea className="h-[450px] w-full rounded-md border p-6">
