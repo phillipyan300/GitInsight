@@ -1,6 +1,9 @@
 # Step 1: Specify the base image
 FROM python:3.9-slim
 
+RUN apt-get update && apt-get install -y git
+
+
 RUN git clone https://github.com/phillipyan300/GitInsight.git
 
 # Step 2: Set the working directory in the container
