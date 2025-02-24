@@ -169,7 +169,10 @@ def chat():
     except Exception as e:
         logger.error(f"Error in chat: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
-
+    
+@app.route("/hi")
+def hi():
+    return "hi"
 
 @app.route("/test")
 def test():
