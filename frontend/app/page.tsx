@@ -22,14 +22,10 @@ export default function Home() {
   const [input, setInput] = useState("")
   const [isListening, setIsListening] = useState(false)
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null)
-  const [synthesis, setSynthesis] = useState<SpeechSynthesis | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const transcriptRef = useRef("")
   const submitButtonRef = useRef<HTMLButtonElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
-  const client = useMemo(() => new ElevenLabsClient({
-    apiKey: process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY as string
-  }), [])
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
@@ -57,11 +53,6 @@ export default function Home() {
         }
 
         setRecognition(recognitionInstance)
-      }
-
-      // Speech Synthesis setup
-      if ('speechSynthesis' in window) {
-        setSynthesis(window.speechSynthesis)
       }
     }
   }, [])
