@@ -15,7 +15,7 @@ CORS(
     app,
     resources={
         r"/api/*": {
-            "origins": ["http://localhost:3000", "https://gitinsight.vercel.app"],
+            "origins": ["http://localhost:3000", "https://git-insight-five.vercel.app/"],
             "methods": ["POST", "OPTIONS"],
             "allow_headers": ["Content-Type"],
         }
