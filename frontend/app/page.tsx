@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, useRef, useMemo } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { ingestRepository, sendChatMessage } from "@/lib/api"
 import { Send, Mic, MicOff } from "lucide-react"
 import type { Message, RepoContent } from "@/lib/types"
-import { ElevenLabsClient } from "elevenlabs"
+// import { ElevenLabsClient } from "elevenlabs"
 import type { SpeechRecognition, SpeechRecognitionEvent } from "@/types"
 
 export default function Home() {
@@ -22,14 +22,10 @@ export default function Home() {
   const [input, setInput] = useState("")
   const [isListening, setIsListening] = useState(false)
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null)
-  const [synthesis, setSynthesis] = useState<SpeechSynthesis | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const transcriptRef = useRef("")
   const submitButtonRef = useRef<HTMLButtonElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
-  const client = useMemo(() => new ElevenLabsClient({
-    apiKey: process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY as string
-  }), [])
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
@@ -57,11 +53,6 @@ export default function Home() {
         }
 
         setRecognition(recognitionInstance)
-      }
-
-      // Speech Synthesis setup
-      if ('speechSynthesis' in window) {
-        setSynthesis(window.speechSynthesis)
       }
     }
   }, [])
