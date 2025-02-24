@@ -29,7 +29,7 @@ async def get_chat_response(text, context=""):
         
         # Format context as a structured message
         context_msg = f"""You are a senior developer with experience in frontend and backend. I will show you a codebase. Please analyze it and help answer questions about it.
-        Keep responses under 100 words and reference specific code when relevant. Use plain text in paragraph f
+        Keep responses under 100 words and reference specific code when relevant.
         
         Here is the codebase:
         
@@ -37,14 +37,11 @@ async def get_chat_response(text, context=""):
         
         Please confirm you've received the codebase."""
         
-        # Send context and wait for confirmation
-        await chat.send_message(context_msg)
+        # Send context and get response (remove await)
+        chat.send_message(context_msg)
         
-        # Send the actual question
-        question = f"""Based on the codebase I just shared, please answer this question:
-        {text}"""
-        
-        response = await chat.send_message(question)
+        # Send the actual question and get response (remove await)
+        response = chat.send_message(text)
         
         logger.info("Received response from Gemini")
         return {
