@@ -23,8 +23,8 @@ interface SpeechRecognitionEvent {
 
 declare global {
     interface Window {
-        webkitSpeechRecognition: any
-        SpeechRecognition: any
+        webkitSpeechRecognition: { new(): SpeechRecognition }
+        SpeechRecognition: { new(): SpeechRecognition }
     }
 }
 
