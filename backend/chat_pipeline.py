@@ -1,5 +1,4 @@
 import google.generativeai as genai
-from google.genai import types
 from dotenv import load_dotenv
 import os
 import logging
