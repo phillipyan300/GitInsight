@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y git
 
 # Clone the repository and set working directory
 RUN git clone https://github.com/phillipyan300/GitInsight.git
-WORKDIR /backend
+WORKDIR /GitInsight/backend
 
 # Install dependencies
 RUN pip install -r requirements.txt
