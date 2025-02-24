@@ -1,5 +1,7 @@
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
 export async function ingestRepository(url: string) {
-    const response = await fetch('http://localhost:8000/api/ingest', {
+    const response = await fetch(`${API_URL}/api/ingest`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -17,7 +19,7 @@ export async function ingestRepository(url: string) {
 }
 
 export async function sendChatMessage(message: string, repo_url: string) {
-    const response = await fetch('http://localhost:8000/api/chat', {
+    const response = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
