@@ -1,4 +1,4 @@
-from google import genai
+import google.generativeai as genai
 from google.genai import types
 from dotenv import load_dotenv
 import os
@@ -13,20 +13,20 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 # Initialize Gemini client
-client = genai.Client(
-    api_key=os.getenv('GOOGLE_API_KEY'),
-    http_options={'api_version':'v1alpha'}
-)
+api_key = os.getenv('GOOGLE_API_KEY')
+if not api_key:
+    raise ValueError("GOOGLE_API_KEY not found in environment variables")
+
+genai.configure(api_key=api_key)
 
 async def get_chat_response(text, context=""):
     """Get a response from Gemini using chat format"""
     try:
         logger.info("Creating chat session with Gemini")
         
-        # Create chat session exactly as in docs
-        chat = client.aio.chats.create(
-            model='gemini-2.0-flash-thinking-exp'
-        )
+        # Create chat session
+        model = genai.GenerativeModel('gemini-2.0-flash-thinking-exp')
+        chat = model.start_chat()
         
         # Format context as a structured message
         context_msg = f"""You are a senior developer with experience in frontend and backend. I will show you a codebase. Please analyze it and help answer questions about it.
