@@ -177,30 +177,36 @@ export default function Home() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-8 md:p-24">
-      <Card className="w-full max-w-3xl">
-        <CardHeader className="space-y-4">
-          <CardTitle className="text-2xl">GitHub Repo Analysis</CardTitle>
-          <CardDescription className="text-lg">
-            Enter a GitHub repository URL to analyze its content.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <form onSubmit={handleRepoSubmit} className="flex space-x-4 mb-6">
+    <main className="container flex flex-col items-center min-h-screen py-24 gap-8">
+      <div className="text-center space-y-4">
+        <h1 className="text-6xl font-bold tracking-tight">
+          GitInsights
+        </h1>
+        <p className="text-xl text-muted-foreground">
+          Ask questions about any GitHub repository using text or voice.
+        </p>
+      </div>
+
+      <Card className="w-full max-w-3xl bg-[#fffbf0] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+        <CardHeader>
+          <form onSubmit={handleRepoSubmit} className="flex gap-2">
             <Input
-              type="url"
-              placeholder="https://github.com/username/repo"
+              className="border-2 border-black bg-white"
+              placeholder="https://github.com/..."
               value={repoUrl}
               onChange={(e) => setRepoUrl(e.target.value)}
-              required
-              disabled={isLoading}
-              className="text-lg"
             />
-            <Button type="submit" disabled={isLoading} className="px-6">
+            <Button 
+              type="submit"
+              className="bg-[#ffd698] text-black border-2 border-black hover:bg-[#ffc570]"
+              disabled={isLoading}
+            >
               {isLoading ? "Loading..." : "Analyze"}
             </Button>
           </form>
-
+         
+        </CardHeader>
+        <CardContent className="space-y-6">
           <ScrollArea className="h-[450px] w-full rounded-md border p-6">
             {error && (
               <div className="text-red-500 mb-6 p-4 bg-red-50 rounded-md">
@@ -222,7 +228,7 @@ export default function Home() {
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          <span className="font-semibold text-purple-600">Gitman: </span>
+                          <span className="font-semibold text-purple-600">GitInsights: </span>
                           <p className="text-gray-700">{message.content}</p>
                         </div>
                       )}
