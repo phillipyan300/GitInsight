@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { ingestRepository, sendChatMessage } from "@/lib/api"
 import { Send, Mic, MicOff } from "lucide-react"
 import type { Message, RepoContent } from "@/lib/types"
-import { ElevenLabsClient } from "elevenlabs"
+// import { ElevenLabsClient } from "elevenlabs"
 import type { SpeechRecognition, SpeechRecognitionEvent } from "@/types"
 
 export default function Home() {
