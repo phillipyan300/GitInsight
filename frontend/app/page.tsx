@@ -28,6 +28,7 @@ export default function Home() {
   const [isPlaying, setIsPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -65,11 +66,24 @@ export default function Home() {
     }
   }, [repoContent])
 
-  // Add this effect to scroll to bottom when messages change
+  // Modify the scroll effect to use a timeout to ensure content is rendered
   useEffect(() => {
     if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
+      setTimeout(() => {
+        scrollAreaRef.current?.scrollTo({
+          top: scrollAreaRef.current.scrollHeight,
+          behavior: 'smooth'
+        })
+      }, 100)
     }
+  }, [messages])
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
   }, [messages])
 
   const toggleListening = () => {
@@ -184,6 +198,42 @@ export default function Home() {
     }
   }
 
+  // Add function to handle suggested question clicks
+  const handleSuggestedQuestion = (question: string) => {
+    setInput(question)
+    // Submit the question immediately
+    const userMessage: Message = { role: "user", content: question }
+    setMessages(prev => [...prev, userMessage])
+    setInput("")
+    setIsLoading(true)
+    setError(null)
+
+    sendChatMessage(question, repoUrl)
+      .then(response => {
+        if (response.success) {
+          const aiMessage: Message = {
+            role: "assistant",
+            content: response.response
+          }
+          setMessages(prev => [...prev, aiMessage])
+          speakMessage(response.response)
+        } else {
+          throw new Error(response.error || 'Failed to get response')
+        }
+      })
+      .catch(error => {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to send message'
+        setError(errorMessage)
+        setMessages(prev => [...prev, {
+          role: "assistant",
+          content: `Error: ${errorMessage}`
+        }])
+      })
+      .finally(() => {
+        setIsLoading(false)
+      })
+  }
+
   return (
     <main className="container flex flex-col items-center min-h-screen py-24 gap-8">
       <div className="text-center space-y-4">
@@ -237,82 +287,108 @@ export default function Home() {
             ref={scrollAreaRef} 
             className="h-[450px] w-full rounded-md border p-6"
           >
-            {error && (
-              <div className="text-red-500 mb-6 p-4 bg-red-50 rounded-md">
-                Error: {error}
-              </div>
-            )}
-            {repoContent && (
-              <div className="space-y-6">
-                <div className="text-green-600 font-medium p-4 bg-green-50 rounded-md">
-                  Repository was ingested successfully!
+            <div className="space-y-6">
+              {error && (
+                <div className="text-red-500 mb-6 p-4 bg-red-50 rounded-md">
+                  Error: {error}
                 </div>
+              )}
+              {repoContent && (
                 <div className="space-y-6">
-                  {messages.map((message, i) => (
-                    <div key={i} className="space-y-2 py-4">
-                      {message.role === 'user' ? (
-                        <div className="space-y-2">
-                          <span className="font-semibold text-blue-600">You: </span>
-                          <p className="text-gray-700">{message.content}</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <span className="font-semibold text-purple-600">GitInsights: </span>
-                          <p className="text-gray-700">{message.content}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  <div className="text-green-600 font-medium p-4 bg-green-50 rounded-md">
+                    Repository was ingested successfully!
+                  </div>
+                  <div className="space-y-6">
+                    {messages.map((message, i) => (
+                      <div key={i} className="space-y-2 py-4">
+                        {message.role === 'user' ? (
+                          <div className="space-y-2">
+                            <span className="font-semibold text-blue-600">You: </span>
+                            <p className="text-gray-700">{message.content}</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <span className="font-semibold text-purple-600">GitInsights: </span>
+                            <p className="text-gray-700">{message.content}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+              <div ref={messagesEndRef} />
+            </div>
           </ScrollArea>
         </CardContent>
         {repoContent && (
           <CardFooter className="pt-6">
-            <form onSubmit={handleChatSubmit} className="flex w-full space-x-4">
-              <Input
-                ref={inputRef}
-                placeholder="Ask a question about the repository..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                disabled={isLoading}
-                className="text-lg"
-              />
-              <div className="flex space-x-2">
-                <Button 
-                  ref={submitButtonRef}
-                  type="submit" 
-                  disabled={isLoading}
-                  className="px-6"
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  {isLoading ? "Sending..." : "Send"}
-                </Button>
-                <Button
-                  type="button"
-                  onClick={toggleListening}
-                  variant={isListening ? "destructive" : "default"}
-                  className="px-4"
-                >
-                  {isListening ? (
-                    <MicOff className="h-4 w-4" />
-                  ) : (
-                    <Mic className="h-4 w-4" />
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  onClick={stopSpeaking}
-                  variant="outline"
-                  className="px-4"
-                  disabled={!isPlaying}
-                >
-                  <span className="sr-only">Stop Speaking</span>
-                  <div className="w-4 h-4 bg-red-500 rounded-full" />
-                </Button>
+            <div className="w-full space-y-4">
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Try asking:</p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-sm bg-[#f5e6d3] border-2 border-black hover:bg-[#f0d9bf]"
+                    onClick={() => handleSuggestedQuestion("Walk me through how this repository works")}
+                  >
+                    "Walk me through how this repository works"
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-sm bg-[#f5e6d3] border-2 border-black hover:bg-[#f0d9bf]"
+                    onClick={() => handleSuggestedQuestion("What are the most important files in this repo?")}
+                  >
+                    "What are the most important files in this repo?"
+                  </Button>
+                </div>
               </div>
-            </form>
+              <form onSubmit={handleChatSubmit} className="flex w-full space-x-4">
+                <Input
+                  ref={inputRef}
+                  placeholder="Ask a question about the repository..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  disabled={isLoading}
+                  className="text-lg border-2 border-black bg-white"
+                />
+                <div className="flex space-x-2">
+                  <Button 
+                    ref={submitButtonRef}
+                    type="submit" 
+                    disabled={isLoading}
+                    className="px-6 bg-[#ffd698] text-black border-2 border-black hover:bg-[#ffc570]"
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    {isLoading ? "Sending..." : "Send"}
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={toggleListening}
+                    variant={isListening ? "destructive" : "default"}
+                    className="px-4"
+                  >
+                    {isListening ? (
+                      <MicOff className="h-4 w-4" />
+                    ) : (
+                      <Mic className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={stopSpeaking}
+                    variant="outline"
+                    className="px-4"
+                    disabled={!isPlaying}
+                  >
+                    <span className="sr-only">Stop Speaking</span>
+                    <div className="w-4 h-4 bg-red-500 rounded-full" />
+                  </Button>
+                </div>
+              </form>
+            </div>
           </CardFooter>
         )}
       </Card>
