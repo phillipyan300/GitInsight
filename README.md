@@ -25,8 +25,8 @@ Demo video: https://www.loom.com/share/fa91acc50de6443da962f09761e02803?sid=4f6a
 1. Clone and install dependencies:
 
 ```bash
-git clone https://github.com/yourusername/gitinsights.git
-cd gitinsights
+git clone https://github.com/phillipyan300/GitInsight.git
+cd GitInsight
 npm install
 ```
 
