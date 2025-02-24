@@ -219,7 +219,7 @@ export default function Home() {
                 className="bg-[#f5e6d3] border-2 border-black hover:bg-[#f0d9bf]"
                 onClick={() => setRepoUrl("https://github.com/ssocolow/flare_insure")}
               >
-                Next.js
+                Flare Insure
               </Button>
             </div>
           </div>
