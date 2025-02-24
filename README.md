@@ -1,10 +1,12 @@
-# Gitman
+# GitInsights
 
-A conversational AI tool for understanding GitHub repositories. Ask questions about any codebase using text or voice.
+AI-assited onboarding for understanding GitHub repositories. Ask questions about any codebase using text or voice with this conversational AI tool.
+
+![GitInsights Image](./demo.png)
 
 ## Features
 Demo video: https://www.loom.com/share/fa91acc50de6443da962f09761e02803?sid=4f6abb88-2520-42d6-846e-ba4a0b28e757  
-- 🔍 Analyze any public GitHub repository
+- ��� Analyze any public GitHub repository
 - 💬 Ask questions about the code in natural language  
 - 🎙️ Voice interface for hands-free interaction
 - 🤖 Powered by Google's Gemini AI
@@ -23,8 +25,8 @@ Demo video: https://www.loom.com/share/fa91acc50de6443da962f09761e02803?sid=4f6a
 1. Clone and install dependencies:
 
 ```bash
-git clone https://github.com/yourusername/gitman.git
-cd gitman
+git clone https://github.com/yourusername/gitinsights.git
+cd gitinsights
 npm install
 ```
 
