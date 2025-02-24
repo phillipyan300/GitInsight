@@ -1,8 +1,10 @@
 # Step 1: Specify the base image
 FROM python:3.9-slim
 
+RUN git clone https://github.com/phillipyan300/GitInsight.git
+
 # Step 2: Set the working directory in the container
-WORKDIR /app
+WORKDIR /backend
 
 # Step 3: Copy the requirements file into the container
 COPY requirements.txt .
