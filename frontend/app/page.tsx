@@ -27,6 +27,7 @@ export default function Home() {
   const submitButtonRef = useRef<HTMLButtonElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -63,6 +64,13 @@ export default function Home() {
       inputRef.current?.focus()
     }
   }, [repoContent])
+
+  // Add this effect to scroll to bottom when messages change
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
+    }
+  }, [messages])
 
   const toggleListening = () => {
     if (!recognition) return
@@ -225,7 +233,10 @@ export default function Home() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <ScrollArea className="h-[450px] w-full rounded-md border p-6">
+          <ScrollArea 
+            ref={scrollAreaRef} 
+            className="h-[450px] w-full rounded-md border p-6"
+          >
             {error && (
               <div className="text-red-500 mb-6 p-4 bg-red-50 rounded-md">
                 Error: {error}
