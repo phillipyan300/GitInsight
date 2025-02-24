@@ -346,7 +346,7 @@ export default function Home() {
                     className="text-sm bg-[#f5e6d3] border-2 border-black hover:bg-[#f0d9bf]"
                     onClick={() => handleSuggestedQuestion("Walk me through how this repository works")}
                   >
-                    "Walk me through how this repository works"
+                    &ldquo;Walk me through how this repository works&rdquo;
                   </Button>
                   <Button
                     variant="outline"
@@ -354,7 +354,7 @@ export default function Home() {
                     className="text-sm bg-[#f5e6d3] border-2 border-black hover:bg-[#f0d9bf]"
                     onClick={() => handleSuggestedQuestion("What are the most important files in this repo?")}
                   >
-                    "What are the most important files in this repo?"
+                    &ldquo;What are the most important files in this repo?&rdquo;
                   </Button>
                 </div>
               </div>
