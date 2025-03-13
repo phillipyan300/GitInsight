@@ -1,6 +1,6 @@
 # GitInsights
 
-AI-assited onboarding for understanding GitHub repositories. Ask questions about any codebase using text or voice with this conversational AI tool.
+AI-assisted onboarding for understanding GitHub repositories. Ask questions about any codebase using text or voice with this conversational AI tool.
 
 ![GitInsights Image](./demo.png)
 
